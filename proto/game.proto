@@ -1,0 +1,62 @@
+syntax = "proto3";
+package wildwest;
+
+// Canonical schema reference. The runtime copy is embedded in web/js/net/codec.js
+// (parsed with protobuf.parse — no build step). Keep the two in sync.
+//
+// All P2P DataChannel traffic is a single Envelope so message types can be added
+// without a build step. Signaling (matchmaking) stays JSON-over-WebSocket; only
+// this gameplay channel is binary/protobuf.
+message Envelope {
+  oneof payload {
+    TimeSyncPing time_sync_ping = 1;
+    TimeSyncPong time_sync_pong = 2;
+    HighNoonSchedule high_noon = 3;
+    RecoilSignal recoil = 4;
+    RoundResult round_result = 5;
+    MotionState motion = 6;
+    Heartbeat heartbeat = 7;
+    Control control = 8;
+  }
+}
+
+// --- Clock synchronization (Phase 3) ---
+message TimeSyncPing {
+  uint64 client_time = 1; // sender clock (ms)
+  uint32 seq = 2;
+}
+message TimeSyncPong {
+  uint64 ping_client_time = 1; // echoed from the ping
+  uint64 peer_time = 2;        // responder clock (ms) when received
+  uint32 seq = 3;
+}
+
+// --- Duel (Phase 3) ---
+message HighNoonSchedule {
+  uint64 target_time = 1; // agreed fire moment in the HOST clock (ms)
+  uint32 round = 2;
+}
+message RecoilSignal {
+  uint32 player_id = 1;
+  float accel_z = 2;
+  float gyro_x = 3;
+  uint64 timestamp = 4;
+}
+message RoundResult {
+  uint32 round = 1;
+  float reaction_ms = 2;
+  bool false_start = 3; // drew before the bell / faster than the human floor
+  bool missed = 4;      // no draw within the round window
+}
+
+// --- Live state / control ---
+message MotionState {
+  float pitch = 1;
+  float roll = 2;
+  bool holstered = 3;
+}
+message Heartbeat { uint64 t = 1; }
+message Control {
+  string kind = 1; // "rematch" (extensible: "ready", etc.)
+  uint32 round = 2;
+}

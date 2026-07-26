@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#241a12" />
+  <title>Wild West Quick-Draw</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rye&family=Oswald:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <!-- START -->
+  <main class="screen active" id="screen-start">
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="content">
+      <p class="eyebrow">High Noon Duel</p>
+      <h1 class="title">Wild West<br />Quick-Draw</h1>
+      <p class="tagline">Holster your phone. Wait for the bell. Out-draw your opponent.</p>
+      <button class="btn-primary" id="btn-start" type="button">Saddle Up</button>
+      <section class="diag" id="diag" aria-live="polite">
+        <h2 class="diag-title">Rig Check</h2>
+        <ul class="diag-list" id="diag-list"></ul>
+      </section>
+      <p class="safety">
+        <span class="safety-mark" aria-hidden="true">!</span>
+        Loop a wrist-strap or grip firmly &mdash; you&rsquo;ll be flicking your phone.
+      </p>
+    </div>
+  </main>
+
+  <!-- LOBBY -->
+  <main class="screen" id="screen-lobby">
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="content">
+      <h2 class="subtitle">Choose Your Poison</h2>
+      <div class="stack" id="lobby-choose">
+        <button class="btn-primary" id="btn-create" type="button">Create Duel</button>
+        <p class="hint">&mdash; or join with a code &mdash;</p>
+        <div class="join-row">
+          <input
+            class="code-input" id="join-code" type="text" maxlength="4"
+            autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="CODE"
+          />
+          <button class="btn-secondary" id="btn-join" type="button">Join</button>
+        </div>
+        <p class="hint error" id="lobby-hint"></p>
+      </div>
+      <div class="stack" id="lobby-host" hidden>
+        <p class="hint">Share this code with your opponent</p>
+        <div class="room-code" id="room-code">&mdash;&mdash;&mdash;&mdash;</div>
+        <div class="link-box">
+          <input class="link-input" id="join-link" readonly />
+          <button class="btn-secondary" id="btn-copy" type="button">Copy</button>
+        </div>
+        <p class="status" id="host-status">Waiting for opponent&hellip;</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- CONNECTING -->
+  <main class="screen" id="screen-connecting">
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="content">
+      <h2 class="subtitle">Saddling Up&hellip;</h2>
+      <p class="status" id="conn-status">Connecting to opponent&hellip;</p>
+    </div>
+  </main>
+
+  <!-- DUEL -->
+  <main class="screen" id="screen-duel">
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="content duel">
+      <div class="scoreboard">
+        <div class="score me">
+          <span class="score-num" id="score-me">0</span>
+          <span class="score-label">You&nbsp;&middot;&nbsp;P<span id="me-id">?</span></span>
+        </div>
+        <div class="round-badge">Round <span id="round-num">&ndash;</span> &middot; Best of <span id="best-of">3</span></div>
+        <div class="score opp">
+          <span class="score-num" id="score-opp">0</span>
+          <span class="score-label">Opponent</span>
+        </div>
+      </div>
+
+      <div class="stage" id="duel-stage">
+        <p class="stage-prompt" id="stage-prompt">Connecting&hellip;</p>
+        <p class="stage-sub" id="stage-sub"></p>
+      </div>
+
+      <button class="btn-draw" id="btn-draw" type="button" hidden>DRAW!</button>
+      <button class="btn-primary duel-action" id="btn-action" type="button" hidden>Start Duel</button>
+
+      <p class="hint" id="duel-hint">Tap DRAW or press SPACE the instant the bell rings.</p>
+      <section class="diag">
+        <h2 class="diag-title">Debug</h2>
+        <ul class="diag-list log" id="log"></ul>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
