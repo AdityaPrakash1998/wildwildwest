@@ -7,15 +7,28 @@ import { initCodec, encode, decode } from './net/codec.js';
 import { ClockSync } from './duel/clock.js';
 import { Duel } from './duel/duel.js';
 import { MotionController } from './duel/motion.js';
+import { SoundFX } from './fx/audio.js';
+import { initFX, muzzleFlash, highNoonFlash, bloodSplash, screenShake } from './fx/visuals.js';
 
 const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
-const BEST_OF = 3;
+let bestOf = 3;
+const sfx = new SoundFX();
 
 // ---------- screen router ----------
 const screens = {};
 document.querySelectorAll('.screen').forEach((s) => (screens[s.id] = s));
 function show(id) { for (const s of Object.values(screens)) s.classList.toggle('active', s.id === id); }
 const $ = (id) => document.getElementById(id);
+
+// iOS "Shake to Undo" pops the "Undo Typing" dialog on a flick when a text field
+// still holds an undo stack (the guest typed the room code). Releasing focus from
+// the inputs before gameplay removes the editable first responder, so the flick
+// no longer triggers it.
+function blurActive() {
+  const el = document.activeElement;
+  if (el && typeof el.blur === 'function') el.blur();
+  ['join-code', 'join-link'].forEach((id) => { const n = $(id); if (n) n.blur(); });
+}
 
 // ---------- state ----------
 let signaling = null;
@@ -149,6 +162,7 @@ function joinDuel(rawCode) {
   const code = (rawCode || '').trim().toUpperCase();
   if (code.length < 4) { $('lobby-hint').textContent = 'Enter the 4-character code.'; return; }
   $('lobby-hint').textContent = '';
+  blurActive();
   if (NET_MODE === 'peerjs') {
     role = 'guest';
     myPlayerId = 2;
@@ -213,9 +227,11 @@ function onChannelMessage(bytes) {
 }
 
 async function onChannelOpen() {
+  blurActive();
   show('screen-duel');
   $('me-id').textContent = myPlayerId;
-  $('best-of').textContent = BEST_OF;
+  $('best-of').textContent = bestOf;
+  initFX();
   log('Transport: ' + (NET_MODE === 'peerjs' ? 'PeerJS Cloud (serverless broker)' : 'local ws server'));
   $('duel-hint').textContent = motionActive
     ? 'Flick your phone to draw — or tap DRAW / press SPACE.'
@@ -225,7 +241,8 @@ async function onChannelOpen() {
   if (!codecReady) { $('stage-prompt').textContent = 'Codec failed'; $('stage-sub').textContent = codecError || ''; return; }
 
   clock = new ClockSync(channelSend);
-  duel = new Duel({ role, myPlayerId, bestOf: BEST_OF, send: channelSend, onView: renderDuel, getOffset: () => clock.offset });
+  duel = new Duel({ role, myPlayerId, bestOf, send: channelSend, onView: renderDuel, getOffset: () => clock.offset, onEvent: onDuelEvent });
+  if (role === 'host') channelSend({ control: { kind: 'config', round: bestOf } });
 
   // Guest measures clock offset to the host; the host is the reference and just
   // answers pings (handled in onChannelMessage).
@@ -249,6 +266,7 @@ function renderDuel(v) {
   $('round-num').textContent = v.round || '–';
   $('score-me').textContent = v.scoreMe;
   $('score-opp').textContent = v.scoreOpp;
+  $('best-of').textContent = v.bestOf;
 
   const prompt = $('stage-prompt');
   const sub = $('stage-sub');
@@ -349,6 +367,7 @@ function updateCalPermUI() {
 }
 
 function openCalibration() {
+  blurActive();
   calibrating = true;
   $('cal-slider').value = String(motion.getSensitivity());
   positionCalThreshold();
@@ -360,13 +379,54 @@ function closeCalibration() {
   show('screen-start');
 }
 
+// ---------- audio + visual FX ----------
+function shake(intensity) { screenShake(document.querySelector('#screen-duel .content'), intensity); }
+function recoilGun() {
+  const g = $('gun-wrap');
+  if (!g) return;
+  g.classList.remove('recoil');
+  void g.offsetWidth; // restart the animation
+  g.classList.add('recoil');
+  setTimeout(() => g.classList.remove('recoil'), 400);
+}
+// Reacts to discrete duel events. Blood hits the player who LOST (got shot).
+function onDuelEvent(name, data) {
+  switch (name) {
+    case 'arm':
+      sfx.startTension();
+      break;
+    case 'bell':
+      sfx.stopTension();
+      sfx.bell();
+      highNoonFlash();
+      break;
+    case 'draw':
+      sfx.stopTension();
+      if (data.falseStart) sfx.click();
+      else if (data.missed) { /* no shot fired */ }
+      else { sfx.gunshot(); muzzleFlash(); recoilGun(); shake('md'); }
+      break;
+    case 'result':
+      if (data.matchOver) {
+        if (data.matchWinner === 'me') sfx.win();
+        else { sfx.lose(); bloodSplash(1.4); shake('lg'); }
+      } else if (data.roundWinner === 'opp') {
+        sfx.hit(); bloodSplash(1); shake('md');
+      } else if (data.roundWinner === 'me') {
+        sfx.ricochet();
+      }
+      break;
+  }
+}
+
 // ---------- inputs ----------
 $('btn-action').addEventListener('click', () => {
+  sfx.resume();
   if (!duel) return;
   if (duel.state === 'match') duel.requestRematch();
   else duel.startRound();
 });
-$('btn-draw').addEventListener('click', () => duel && duel.handleDraw());
+$('btn-draw').addEventListener('click', () => { sfx.resume(); if (duel) duel.handleDraw(); });
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && duel && (duel.state === 'armed' || duel.state === 'fire')) {
     e.preventDefault();
@@ -377,6 +437,7 @@ document.addEventListener('keydown', (e) => {
 // ---------- boot / lobby events ----------
 $('btn-start').addEventListener('click', async () => {
   enableMotion();
+  sfx.resume();
   await ensureCodec();
   if (NET_MODE === 'ws') connectSignaling();
   show('screen-lobby');
@@ -389,6 +450,20 @@ $('btn-calibrate').addEventListener('click', openCalibration);
 $('btn-enable-motion').addEventListener('click', enableMotion);
 $('btn-cal-done').addEventListener('click', closeCalibration);
 $('cal-slider').addEventListener('input', (e) => { motion.setSensitivity(e.target.value); positionCalThreshold(); });
+$('btn-mute').addEventListener('click', () => {
+  const on = !sfx.isEnabled();
+  sfx.setEnabled(on);
+  if (on) sfx.resume();
+  const b = $('btn-mute');
+  b.setAttribute('aria-pressed', String(!on));
+  b.textContent = on ? 'Sound: On' : 'Sound: Off';
+});
+document.querySelectorAll('.round-opt').forEach((b) => {
+  b.addEventListener('click', () => {
+    bestOf = parseInt(b.dataset.n, 10) || 3;
+    document.querySelectorAll('.round-opt').forEach((x) => x.classList.toggle('is-active', x === b));
+  });
+});
 $('btn-copy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText($('join-link').value); $('btn-copy').textContent = 'Copied'; }
   catch { /* clipboard may be blocked; user can select manually */ }

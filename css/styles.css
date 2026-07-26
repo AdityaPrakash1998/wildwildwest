@@ -233,6 +233,77 @@ body {
 }
 .slider-row input[type="range"] { width: 100%; height: 36px; accent-color: var(--rust-500); cursor: pointer; }
 
+/* ---- gun animation ---- */
+.gun-wrap {
+  width: min(70vw, 300px); align-self: center; margin-bottom: 2px;
+  transform-origin: 42% 88%;
+  transform: rotate(58deg) translateY(10px) scale(0.9);
+  opacity: 0.55;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 220ms ease;
+}
+.gun { width: 100%; height: auto; display: block; }
+.stage.armed .gun-wrap { opacity: 0.85; transform: rotate(50deg) translateY(6px) scale(0.92); }
+.stage.fire .gun-wrap { opacity: 1; transform: rotate(0deg) translateY(-6px) scale(1); }
+.gun-wrap.recoil { animation: gun-recoil 380ms ease-out; }
+@keyframes gun-recoil {
+  0%   { transform: rotate(0deg) translateY(-6px) scale(1); }
+  18%  { transform: rotate(-17deg) translate(-10px, -16px) scale(1.03); }
+  55%  { transform: rotate(-5deg) translateY(-9px) scale(1); }
+  100% { transform: rotate(0deg) translateY(-6px) scale(1); }
+}
+.muzzle-star { opacity: 0; transform-origin: center; }
+.gun-wrap.recoil .muzzle-star { animation: muzzle-pop 200ms ease-out; }
+@keyframes muzzle-pop {
+  0%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  30%  { opacity: 1; transform: scale(1.15) rotate(18deg); }
+  100% { opacity: 0; transform: scale(0.8) rotate(34deg); }
+}
+
+/* ---- full-screen FX overlays ---- */
+#fx-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 60; }
+#fx-flash { position: fixed; inset: 0; pointer-events: none; z-index: 59; opacity: 0; }
+#fx-flash.show.muzzle { animation: fx-muzzle 180ms ease-out; background: radial-gradient(55% 45% at 68% 46%, rgba(255, 222, 130, 0.8), rgba(255, 150, 40, 0.25) 40%, transparent 70%); }
+#fx-flash.show.noon   { animation: fx-noon 340ms ease-out;   background: radial-gradient(85% 70% at 50% 40%, rgba(255, 243, 208, 0.92), rgba(212, 175, 55, 0.3) 45%, transparent 78%); }
+#fx-flash.show.blood  { animation: fx-blood 520ms ease-out;  background: radial-gradient(120% 100% at 50% 42%, transparent 42%, rgba(139, 0, 0, 0.6) 100%); }
+@keyframes fx-muzzle { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fx-noon   { 0% { opacity: 0; } 20% { opacity: 0.95; } 100% { opacity: 0; } }
+@keyframes fx-blood  { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---- screen shake ---- */
+.shake-sm { --amp: 4px; }
+.shake-md { --amp: 8px; }
+.shake-lg { --amp: 13px; }
+.shake-sm, .shake-md, .shake-lg { animation: fx-shake 0.5s ease; }
+@keyframes fx-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  15% { transform: translate(calc(var(--amp) * -1), calc(var(--amp) * 0.4)) rotate(-0.7deg); }
+  30% { transform: translate(var(--amp), calc(var(--amp) * -0.4)) rotate(0.7deg); }
+  45% { transform: translate(calc(var(--amp) * -0.7), 0) rotate(-0.5deg); }
+  60% { transform: translate(calc(var(--amp) * 0.6), calc(var(--amp) * 0.3)) rotate(0.4deg); }
+  80% { transform: translate(calc(var(--amp) * -0.3), 0) rotate(-0.2deg); }
+}
+
+/* ---- rounds selector + mute ---- */
+.rounds { display: flex; flex-direction: column; gap: var(--space-1); align-items: center; }
+.rounds-label { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass-400); }
+.rounds-opts { display: flex; gap: var(--space-1); }
+.round-opt {
+  font-family: var(--font-display); font-size: 20px; color: var(--parchment);
+  width: 52px; min-height: 48px; background: rgba(232, 211, 168, 0.06);
+  border: 2px solid rgba(212, 175, 55, 0.35); border-radius: var(--radius); cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.round-opt.is-active { background: var(--rust-500); border-color: var(--brass-400); color: var(--sand); }
+.round-opt:focus-visible { outline: 3px solid var(--flash); outline-offset: 2px; }
+.btn-mute {
+  font-family: var(--font-ui); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  font-size: 12px; color: var(--brass-400); background: transparent; border: none;
+  cursor: pointer; align-self: center; padding: 6px; min-height: 40px;
+}
+.btn-mute[aria-pressed="true"] { color: #e08a7a; }
+.btn-mute:focus-visible { outline: 3px solid var(--flash); outline-offset: 3px; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
   .stage.fire { background: none; }

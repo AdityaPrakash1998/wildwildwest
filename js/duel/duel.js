@@ -38,7 +38,7 @@ export function decideRound(a, b) {
 }
 
 export class Duel {
-  constructor({ role, myPlayerId, bestOf = 3, send, onView, getOffset }) {
+  constructor({ role, myPlayerId, bestOf = 3, send, onView, getOffset, onEvent }) {
     this.role = role;
     this.me = myPlayerId;
     this.bestOf = bestOf;
@@ -46,6 +46,7 @@ export class Duel {
     this.send = send;
     this.onView = onView;
     this.getOffset = getOffset || (() => 0);
+    this.onEvent = onEvent || (() => {});
     this._timers = [];
   }
 
@@ -104,6 +105,7 @@ export class Duel {
     this.state = 'armed';
     const wait = Math.max(0, fireLocal - Date.now());
     this._timers.push(setTimeout(() => this._fire(), wait));
+    this.onEvent('arm');
     this._view();
   }
 
@@ -111,6 +113,7 @@ export class Duel {
     if (this.state !== 'armed') return;
     this.state = 'fire';
     this.firedLocal = Date.now();
+    this.onEvent('bell');
     this._timers.push(setTimeout(
       () => this._setResult({ reactionMs: DRAW_TIMEOUT_MS, falseStart: false, missed: true }),
       DRAW_TIMEOUT_MS,
@@ -131,6 +134,7 @@ export class Duel {
   _setResult(res) {
     if (this.myResult) return;
     this.myResult = Object.assign({ playerId: this.me }, res);
+    this.onEvent('draw', { falseStart: res.falseStart, missed: res.missed, reactionMs: res.reactionMs });
     this.send({ round_result: { round: this.round, reaction_ms: res.reactionMs, false_start: res.falseStart, missed: res.missed } });
     this._clearTimers();
     this.state = 'fire';
@@ -165,9 +169,12 @@ export class Duel {
     if (matchOver) {
       this.state = 'match';
       const winnerId = this.scoreP1 >= this.need ? 1 : 2;
-      this._view({ roundWinner, matchWinner: winnerId === this.me ? 'me' : 'opp' });
+      const matchWinner = winnerId === this.me ? 'me' : 'opp';
+      this.onEvent('result', { roundWinner, matchOver: true, matchWinner });
+      this._view({ roundWinner, matchWinner });
     } else {
       this.state = 'round';
+      this.onEvent('result', { roundWinner, matchOver: false, matchWinner: null });
       this._view({ roundWinner });
       if (this.role === 'host') this._timers.push(setTimeout(() => this.startRound(), ROUND_RESULT_MS));
     }
@@ -183,6 +190,16 @@ export class Duel {
     if (msg.high_noon) this._onHighNoon(msg.high_noon);
     else if (msg.round_result) this._onRoundResult(msg.round_result);
     else if (msg.control && msg.control.kind === 'rematch') this._doRematch();
+    else if (msg.control && msg.control.kind === 'config') this.setBestOf(msg.control.round);
+  }
+
+  /** Set best-of round count (forced odd) and re-render. Used for host→guest sync. */
+  setBestOf(n) {
+    n = Math.max(1, Math.round(Number(n) || this.bestOf));
+    if (n % 2 === 0) n += 1;
+    this.bestOf = n;
+    this.need = winsNeeded(n);
+    this._view();
   }
 
   _doRematch() {

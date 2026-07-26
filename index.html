@@ -30,6 +30,7 @@
         <h2 class="diag-title">Rig Check</h2>
         <ul class="diag-list" id="diag-list"></ul>
       </section>
+      <p class="hint">Lock your phone to <strong>portrait</strong> orientation before you duel &mdash; it stays put while you draw.</p>
       <p class="safety">
         <span class="safety-mark" aria-hidden="true">!</span>
         Loop a wrist-strap or grip firmly &mdash; you&rsquo;ll be flicking your phone.
@@ -43,6 +44,15 @@
     <div class="content">
       <h2 class="subtitle">Choose Your Poison</h2>
       <div class="stack" id="lobby-choose">
+        <div class="rounds" id="rounds-select" role="group" aria-label="Round count">
+          <span class="rounds-label">Best of</span>
+          <div class="rounds-opts">
+            <button class="round-opt" type="button" data-n="1">1</button>
+            <button class="round-opt is-active" type="button" data-n="3">3</button>
+            <button class="round-opt" type="button" data-n="5">5</button>
+            <button class="round-opt" type="button" data-n="7">7</button>
+          </div>
+        </div>
         <button class="btn-primary" id="btn-create" type="button">Create Duel</button>
         <p class="hint">&mdash; or join with a code &mdash;</p>
         <div class="join-row">
@@ -113,6 +123,27 @@
       </div>
 
       <div class="stage" id="duel-stage">
+        <div class="gun-wrap" id="gun-wrap" aria-hidden="true">
+          <svg class="gun" viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg">
+            <g class="muzzle-star" transform="translate(214 70)">
+              <path d="M0 -28 L8 -9 28 0 8 9 0 28 -8 9 -28 0 -8 -9 Z" fill="#fff3d0" />
+              <circle r="10" fill="#ffd76a" />
+            </g>
+            <rect x="120" y="60" width="98" height="18" rx="3" fill="#6b6258" />
+            <rect x="120" y="60" width="98" height="6" rx="3" fill="#8a8073" />
+            <rect x="92" y="52" width="52" height="42" rx="6" fill="#4a4239" />
+            <circle cx="112" cy="73" r="21" fill="#7a7064" />
+            <circle cx="112" cy="73" r="21" fill="none" stroke="#2e2116" stroke-width="3" />
+            <circle cx="112" cy="60" r="3.4" fill="#2e2116" />
+            <circle cx="123" cy="73" r="3.4" fill="#2e2116" />
+            <circle cx="112" cy="86" r="3.4" fill="#2e2116" />
+            <circle cx="101" cy="73" r="3.4" fill="#2e2116" />
+            <path d="M92 52 q-10 -6 -14 2 l6 6 q6 -6 8 -2 Z" fill="#3a332c" />
+            <path d="M96 94 q4 20 22 18 l0 -6 q-14 2 -16 -12 Z" fill="#4a4239" />
+            <path d="M92 88 L74 150 q-2 8 8 8 l22 -2 q8 -1 8 -10 L108 92 Z" fill="#6b4226" />
+            <path d="M94 90 L108 93 L104 120 L88 117 Z" fill="#7a4b2b" />
+          </svg>
+        </div>
         <p class="stage-prompt" id="stage-prompt">Connecting&hellip;</p>
         <p class="stage-sub" id="stage-sub"></p>
       </div>
@@ -121,6 +152,7 @@
       <button class="btn-primary duel-action" id="btn-action" type="button" hidden>Start Duel</button>
 
       <p class="hint" id="duel-hint">Tap DRAW or press SPACE the instant the bell rings.</p>
+      <button class="btn-mute" id="btn-mute" type="button" aria-pressed="false">Sound: On</button>
       <section class="diag">
         <h2 class="diag-title">Debug</h2>
         <ul class="diag-list log" id="log"></ul>
