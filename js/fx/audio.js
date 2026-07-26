@@ -8,6 +8,7 @@ export class SoundFX {
     this.master = null;
     this.enabled = true;
     this._tick = null;
+    this._primed = false;
   }
 
   /** Must be called inside a user gesture (tap) to unlock audio on iOS. */
@@ -20,7 +21,19 @@ export class SoundFX {
       this.master.gain.value = 0.9;
       this.master.connect(this.ctx.destination);
     }
-    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx.state !== 'running') this.ctx.resume();
+    // iOS/WebKit: a resumed context stays silent until a real node plays inside a
+    // gesture. Play a 1-sample silent buffer once to fully unlock output.
+    if (!this._primed) {
+      try {
+        const buf = this.ctx.createBuffer(1, 1, 22050);
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(this.ctx.destination);
+        src.start(0);
+        this._primed = true;
+      } catch { /* ignore */ }
+    }
   }
 
   setEnabled(on) { this.enabled = !!on; if (!on) this.stopTension(); }

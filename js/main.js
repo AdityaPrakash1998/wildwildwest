@@ -411,6 +411,7 @@ function onDuelEvent(name, data) {
   switch (name) {
     case 'arm':
       sfx.startTension();
+      if (role === 'guest' && clock) clock.stopAutoSync();
       break;
     case 'bell':
       sfx.stopTension();
@@ -424,6 +425,7 @@ function onDuelEvent(name, data) {
       else { sfx.gunshot(); muzzleFlash(); recoilGun(); shake('md'); gunSmoke(); haptic([0, 45, 25, 20]); }
       break;
     case 'result':
+      if (role === 'guest' && clock) clock.startAutoSync();
       if (data.matchOver) {
         if (data.matchWinner === 'me') sfx.win();
         else { sfx.lose(); bloodSplash(1.4); shake('lg'); }
@@ -461,8 +463,8 @@ $('btn-start').addEventListener('click', async () => {
   const room = new URLSearchParams(location.search).get('room');
   if (room) { $('join-code').value = room.toUpperCase(); joinDuel(room); }
 });
-$('btn-create').addEventListener('click', createDuel);
-$('btn-join').addEventListener('click', () => joinDuel($('join-code').value));
+$('btn-create').addEventListener('click', () => { sfx.resume(); createDuel(); });
+$('btn-join').addEventListener('click', () => { sfx.resume(); joinDuel($('join-code').value); });
 $('btn-calibrate').addEventListener('click', openCalibration);
 $('btn-enable-motion').addEventListener('click', enableMotion);
 $('btn-cal-done').addEventListener('click', closeCalibration);
