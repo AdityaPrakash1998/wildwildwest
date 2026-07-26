@@ -25,6 +25,7 @@
       <h1 class="title">Wild West<br />Quick-Draw</h1>
       <p class="tagline">Holster your phone. Wait for the bell. Out-draw your opponent.</p>
       <button class="btn-primary" id="btn-start" type="button">Saddle Up</button>
+      <button class="btn-ghost" id="btn-calibrate" type="button" hidden>Test your draw &#9656;</button>
       <section class="diag" id="diag" aria-live="polite">
         <h2 class="diag-title">Rig Check</h2>
         <ul class="diag-list" id="diag-list"></ul>
@@ -71,6 +72,27 @@
     <div class="content">
       <h2 class="subtitle">Saddling Up&hellip;</h2>
       <p class="status" id="conn-status">Connecting to opponent&hellip;</p>
+    </div>
+  </main>
+
+  <!-- CALIBRATE -->
+  <main class="screen" id="screen-calibrate">
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="content">
+      <h2 class="subtitle">Test Your Draw</h2>
+      <p class="tagline">Hold your phone like a holstered pistol, then <strong>flick up fast</strong> &mdash; like drawing. The meter shows your draw strength; each detected draw flashes below.</p>
+      <button class="btn-primary" id="btn-enable-motion" type="button" hidden>Enable Motion</button>
+      <div class="meter" id="cal-meter" aria-hidden="true">
+        <div class="meter-fill" id="cal-fill"></div>
+        <div class="meter-thresh" id="cal-thresh"></div>
+      </div>
+      <p class="meter-read">draw <span id="cal-mag">0.0</span> &middot; trigger at <span id="cal-thresh-val">14</span></p>
+      <div class="cal-flash" id="cal-flash" aria-hidden="true">DRAW!</div>
+      <label class="slider-row" for="cal-slider">Sensitivity
+        <input type="range" id="cal-slider" min="0" max="100" value="55" />
+      </label>
+      <p class="hint" id="cal-status"></p>
+      <button class="btn-secondary" id="btn-cal-done" type="button">Save &amp; Back</button>
     </div>
   </main>
 

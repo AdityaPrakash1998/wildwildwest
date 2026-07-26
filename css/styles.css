@@ -187,6 +187,52 @@ body {
   font-weight: 700; font-size: 12px; line-height: 18px; text-align: center;
 }
 
+/* ---- control / calibration ---- */
+.btn-ghost {
+  font-family: var(--font-ui); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  font-size: 14px; color: var(--brass-400); background: transparent; border: none;
+  cursor: pointer; align-self: center; padding: var(--space-1); min-height: 44px;
+  text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(212, 175, 55, 0.5);
+}
+.btn-ghost:hover { color: var(--parchment); }
+.btn-ghost:focus-visible { outline: 3px solid var(--flash); outline-offset: 3px; }
+
+.meter {
+  position: relative; width: 100%; max-width: 380px; height: 26px; align-self: center;
+  background: rgba(232, 211, 168, 0.10); border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 999px; overflow: hidden;
+}
+.meter-fill {
+  position: absolute; inset: 0 auto 0 0; width: 0%;
+  background: linear-gradient(90deg, var(--tan-500), var(--rust-500));
+  transition: width 60ms linear;
+}
+.meter-fill.hot { background: linear-gradient(90deg, var(--brass-400), var(--flash)); }
+.meter-thresh {
+  position: absolute; top: -4px; bottom: -4px; width: 3px; left: 50%;
+  background: var(--brass-400); box-shadow: 0 0 6px rgba(212, 175, 55, 0.8);
+}
+.meter-read { font-size: 13px; opacity: 0.85; font-variant-numeric: tabular-nums; }
+.meter-read span { color: var(--brass-400); }
+
+.cal-flash {
+  font-family: var(--font-display); font-size: 30px; color: var(--flash);
+  text-shadow: 0 0 24px rgba(255, 243, 208, 0.85); min-height: 1.2em; opacity: 0;
+}
+.cal-flash.show { animation: cal-pop 420ms ease-out; }
+@keyframes cal-pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  25% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+.slider-row {
+  display: flex; flex-direction: column; gap: var(--space-1); align-items: stretch;
+  width: 100%; max-width: 380px; align-self: center;
+  font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass-400);
+}
+.slider-row input[type="range"] { width: 100%; height: 36px; accent-color: var(--rust-500); cursor: pointer; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
   .stage.fire { background: none; }

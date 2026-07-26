@@ -6,6 +6,7 @@ import { PeerLink } from './net/webrtc.js';
 import { initCodec, encode, decode } from './net/codec.js';
 import { ClockSync } from './duel/clock.js';
 import { Duel } from './duel/duel.js';
+import { MotionController } from './duel/motion.js';
 
 const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 const BEST_OF = 3;
@@ -25,6 +26,12 @@ let codecReady = false;
 let codecError = null;
 let clock = null;
 let duel = null;
+let calibrating = false;
+let motionActive = false;
+const motion = new MotionController({
+  onReading: (r) => onMotionReading(r),
+  onDraw: () => onMotionDraw(),
+});
 
 // ---------- rig check (start screen) ----------
 const diagList = $('diag-list');
@@ -210,6 +217,9 @@ async function onChannelOpen() {
   $('me-id').textContent = myPlayerId;
   $('best-of').textContent = BEST_OF;
   log('Transport: ' + (NET_MODE === 'peerjs' ? 'PeerJS Cloud (serverless broker)' : 'local ws server'));
+  $('duel-hint').textContent = motionActive
+    ? 'Flick your phone to draw — or tap DRAW / press SPACE.'
+    : 'Tap DRAW or press SPACE the instant the bell rings.';
 
   if (!codecReady) await ensureCodec();
   if (!codecReady) { $('stage-prompt').textContent = 'Codec failed'; $('stage-sub').textContent = codecError || ''; return; }
@@ -277,6 +287,79 @@ function renderDuel(v) {
   }
 }
 
+// ---------- motion input ("phone as gun") ----------
+function enableMotion() {
+  if (!motion.isSupported()) return;
+  // requestPermission() must be initiated synchronously inside the user gesture.
+  motion.requestPermission().then((granted) => {
+    if (granted) { motion.start(); motionActive = true; log('Motion enabled — flick to draw.'); }
+    else { motionActive = false; log('Motion permission denied — DRAW button still works.'); }
+    updateCalPermUI();
+  }).catch(() => {});
+}
+
+function onMotionDraw() {
+  if (calibrating) { flashCalDetected(); return; }
+  if (duel && (duel.state === 'armed' || duel.state === 'fire')) duel.handleDraw();
+}
+
+function onMotionReading(r) {
+  if (!calibrating) return;
+  const { max } = motion.range;
+  const pct = Math.max(0, Math.min(1, r.mag / (max * 1.2)));
+  const fill = $('cal-fill');
+  fill.style.width = (pct * 100).toFixed(0) + '%';
+  fill.classList.toggle('hot', r.mag >= r.threshold);
+  $('cal-mag').textContent = r.mag.toFixed(1);
+}
+
+let calFlashTimer = null;
+function flashCalDetected() {
+  const el = $('cal-flash');
+  el.classList.remove('show');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('show');
+  clearTimeout(calFlashTimer);
+  calFlashTimer = setTimeout(() => el.classList.remove('show'), 460);
+}
+
+function positionCalThreshold() {
+  const { max } = motion.range;
+  const pct = Math.max(0, Math.min(1, motion.getThreshold() / (max * 1.2)));
+  $('cal-thresh').style.left = (pct * 100).toFixed(0) + '%';
+  $('cal-thresh-val').textContent = motion.getThreshold().toFixed(0);
+}
+
+function updateCalPermUI() {
+  const btn = $('btn-enable-motion');
+  const status = $('cal-status');
+  if (!btn || !status) return;
+  if (!motion.isSupported()) {
+    btn.hidden = true;
+    status.textContent = 'No motion sensor here — the DRAW button works everywhere.';
+  } else if (motion.isRunning()) {
+    btn.hidden = true;
+    status.textContent = 'Sensing… flick your phone to test.';
+  } else {
+    btn.hidden = false;
+    status.textContent = motion.needsPermission()
+      ? 'Tap “Enable Motion”, allow the prompt, then flick.'
+      : 'Tap “Enable Motion” to start sensing.';
+  }
+}
+
+function openCalibration() {
+  calibrating = true;
+  $('cal-slider').value = String(motion.getSensitivity());
+  positionCalThreshold();
+  updateCalPermUI();
+  show('screen-calibrate');
+}
+function closeCalibration() {
+  calibrating = false;
+  show('screen-start');
+}
+
 // ---------- inputs ----------
 $('btn-action').addEventListener('click', () => {
   if (!duel) return;
@@ -293,6 +376,7 @@ document.addEventListener('keydown', (e) => {
 
 // ---------- boot / lobby events ----------
 $('btn-start').addEventListener('click', async () => {
+  enableMotion();
   await ensureCodec();
   if (NET_MODE === 'ws') connectSignaling();
   show('screen-lobby');
@@ -301,10 +385,15 @@ $('btn-start').addEventListener('click', async () => {
 });
 $('btn-create').addEventListener('click', createDuel);
 $('btn-join').addEventListener('click', () => joinDuel($('join-code').value));
+$('btn-calibrate').addEventListener('click', openCalibration);
+$('btn-enable-motion').addEventListener('click', enableMotion);
+$('btn-cal-done').addEventListener('click', closeCalibration);
+$('cal-slider').addEventListener('input', (e) => { motion.setSensitivity(e.target.value); positionCalThreshold(); });
 $('btn-copy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText($('join-link').value); $('btn-copy').textContent = 'Copied'; }
   catch { /* clipboard may be blocked; user can select manually */ }
 });
 
 renderRigCheck();
+if (MotionController.isSupported()) $('btn-calibrate').hidden = false;
 show('screen-start');
