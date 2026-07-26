@@ -134,6 +134,12 @@ body {
   background: var(--parchment); border: 1px solid var(--brass-400); border-radius: var(--radius);
   padding: 0 var(--space-2); min-height: 44px;
 }
+.qr {
+  width: min(60vw, 232px); aspect-ratio: 1 / 1; align-self: center;
+  background: #f7ecd0; padding: 10px; border-radius: 12px;
+  border: 2px solid var(--brass-400); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+.qr svg { display: block; width: 100%; height: 100%; }
 
 /* ---- duel ---- */
 .scoreboard { display: flex; align-items: center; justify-content: space-between; width: 100%; }
@@ -144,10 +150,10 @@ body {
 .round-badge { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass-400); }
 
 .stage {
-  min-height: 32vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  min-height: 52vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
   gap: var(--space-1); border-radius: var(--radius); transition: background 120ms ease;
 }
-.stage-prompt { font-family: var(--font-display); font-size: clamp(34px, 12vw, 60px); line-height: 1; color: var(--parchment); }
+.stage-prompt { font-family: var(--font-display); font-size: clamp(24px, 7vw, 40px); line-height: 1; color: var(--parchment); }
 .stage-sub { font-size: 15px; opacity: 0.85; min-height: 1.2em; }
 .stage.armed .stage-prompt { color: var(--tan-500); }
 .stage.fire { background: radial-gradient(60% 60% at 50% 50%, rgba(255, 243, 208, 0.16), transparent 70%); }
@@ -176,7 +182,7 @@ body {
 .diag-value { color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; word-break: break-all; }
 .diag-row.ok .diag-value { color: #7bbf6a; }
 .diag-row.bad .diag-value { color: #e08a7a; }
-.diag-list.log { max-height: 22vh; overflow-y: auto; }
+.diag-list.log { max-height: 12vh; overflow-y: auto; }
 .diag-list.log .diag-row { display: block; font-family: var(--font-ui); font-size: 13px; color: var(--parchment); font-variant-numeric: tabular-nums; }
 
 /* ---- safety ---- */
@@ -234,30 +240,31 @@ body {
 .slider-row input[type="range"] { width: 100%; height: 36px; accent-color: var(--rust-500); cursor: pointer; }
 
 /* ---- gun animation ---- */
+.content.duel { gap: var(--space-2); }
 .gun-wrap {
-  width: min(70vw, 300px); align-self: center; margin-bottom: 2px;
-  transform-origin: 42% 88%;
-  transform: rotate(58deg) translateY(10px) scale(0.9);
-  opacity: 0.55;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+  width: min(66vw, 300px); align-self: center; margin: 0 auto;
+  transform-origin: 46% 84%;
+  transform: translateY(24px) rotate(7deg) scale(0.9);
+  opacity: 0.6;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55));
   transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 220ms ease;
 }
 .gun { width: 100%; height: auto; display: block; }
-.stage.armed .gun-wrap { opacity: 0.85; transform: rotate(50deg) translateY(6px) scale(0.92); }
-.stage.fire .gun-wrap { opacity: 1; transform: rotate(0deg) translateY(-6px) scale(1); }
-.gun-wrap.recoil { animation: gun-recoil 380ms ease-out; }
+.stage.armed .gun-wrap { opacity: 0.9; transform: translateY(12px) rotate(4deg) scale(0.95); }
+.stage.fire .gun-wrap { opacity: 1; transform: translateY(0) rotate(0deg) scale(1.03); }
+.gun-wrap.recoil { animation: gun-recoil 400ms ease-out; }
 @keyframes gun-recoil {
-  0%   { transform: rotate(0deg) translateY(-6px) scale(1); }
-  18%  { transform: rotate(-17deg) translate(-10px, -16px) scale(1.03); }
-  55%  { transform: rotate(-5deg) translateY(-9px) scale(1); }
-  100% { transform: rotate(0deg) translateY(-6px) scale(1); }
+  0%   { transform: translateY(0) rotate(0deg) scale(1.03); }
+  14%  { transform: translateY(30px) rotate(-6deg) scale(1.06); }
+  46%  { transform: translateY(10px) rotate(-2deg) scale(1.03); }
+  100% { transform: translateY(0) rotate(0deg) scale(1.03); }
 }
 .muzzle-star { opacity: 0; transform-origin: center; }
-.gun-wrap.recoil .muzzle-star { animation: muzzle-pop 200ms ease-out; }
+.gun-wrap.recoil .muzzle-star { animation: muzzle-pop 210ms ease-out; }
 @keyframes muzzle-pop {
-  0%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
-  30%  { opacity: 1; transform: scale(1.15) rotate(18deg); }
-  100% { opacity: 0; transform: scale(0.8) rotate(34deg); }
+  0%   { opacity: 0; transform: scale(0.3); }
+  30%  { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(0.85); }
 }
 
 /* ---- full-screen FX overlays ---- */

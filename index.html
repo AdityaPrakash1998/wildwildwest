@@ -65,8 +65,10 @@
         <p class="hint error" id="lobby-hint"></p>
       </div>
       <div class="stack" id="lobby-host" hidden>
-        <p class="hint">Share this code with your opponent</p>
+        <p class="hint">Have your opponent scan this to join</p>
+        <div class="qr" id="qr" aria-label="Scan to join the duel"></div>
         <div class="room-code" id="room-code">&mdash;&mdash;&mdash;&mdash;</div>
+        <p class="hint">&mdash; or share the code / link &mdash;</p>
         <div class="link-box">
           <input class="link-input" id="join-link" readonly />
           <button class="btn-secondary" id="btn-copy" type="button">Copy</button>
@@ -124,24 +126,56 @@
 
       <div class="stage" id="duel-stage">
         <div class="gun-wrap" id="gun-wrap" aria-hidden="true">
-          <svg class="gun" viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg">
-            <g class="muzzle-star" transform="translate(214 70)">
-              <path d="M0 -28 L8 -9 28 0 8 9 0 28 -8 9 -28 0 -8 -9 Z" fill="#fff3d0" />
-              <circle r="10" fill="#ffd76a" />
+          <svg class="gun" viewBox="0 0 200 340" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gg-barrel" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#2b2e33" /><stop offset="0.4" stop-color="#c2c7cf" /><stop offset="0.7" stop-color="#6b7078" /><stop offset="1" stop-color="#2b2e33" />
+              </linearGradient>
+              <linearGradient id="gg-steel2" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#3a3e44" /><stop offset="0.5" stop-color="#9aa0a8" /><stop offset="1" stop-color="#2b2e33" />
+              </linearGradient>
+              <linearGradient id="gg-steelDark" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#25282d" /><stop offset="0.5" stop-color="#767c85" /><stop offset="1" stop-color="#25282d" />
+              </linearGradient>
+              <radialGradient id="gg-cyl" cx="0.38" cy="0.35" r="0.75">
+                <stop offset="0" stop-color="#c7ccd3" /><stop offset="0.6" stop-color="#6e747c" /><stop offset="1" stop-color="#2c2f34" />
+              </radialGradient>
+              <linearGradient id="gg-wood" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#8a5326" /><stop offset="1" stop-color="#42260f" />
+              </linearGradient>
+              <linearGradient id="gg-brass" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#f0d27a" /><stop offset="1" stop-color="#a9781f" />
+              </linearGradient>
+            </defs>
+            <g class="muzzle-star" transform="translate(114 34)">
+              <path d="M0 -40 L12 -13 40 0 12 13 0 40 -12 13 -40 0 -12 -13 Z" fill="#fff3d0" />
+              <path d="M0 -24 L7 -7 24 0 7 7 0 24 -7 7 -24 0 -7 -7 Z" fill="#ffd76a" />
+              <circle r="8" fill="#fff7e0" />
             </g>
-            <rect x="120" y="60" width="98" height="18" rx="3" fill="#6b6258" />
-            <rect x="120" y="60" width="98" height="6" rx="3" fill="#8a8073" />
-            <rect x="92" y="52" width="52" height="42" rx="6" fill="#4a4239" />
-            <circle cx="112" cy="73" r="21" fill="#7a7064" />
-            <circle cx="112" cy="73" r="21" fill="none" stroke="#2e2116" stroke-width="3" />
-            <circle cx="112" cy="60" r="3.4" fill="#2e2116" />
-            <circle cx="123" cy="73" r="3.4" fill="#2e2116" />
-            <circle cx="112" cy="86" r="3.4" fill="#2e2116" />
-            <circle cx="101" cy="73" r="3.4" fill="#2e2116" />
-            <path d="M92 52 q-10 -6 -14 2 l6 6 q6 -6 8 -2 Z" fill="#3a332c" />
-            <path d="M96 94 q4 20 22 18 l0 -6 q-14 2 -16 -12 Z" fill="#4a4239" />
-            <path d="M92 88 L74 150 q-2 8 8 8 l22 -2 q8 -1 8 -10 L108 92 Z" fill="#6b4226" />
-            <path d="M94 90 L108 93 L104 120 L88 117 Z" fill="#7a4b2b" />
+            <rect x="84" y="66" width="14" height="112" rx="6" fill="url(#gg-steelDark)" />
+            <rect x="98" y="44" width="34" height="140" rx="6" fill="url(#gg-barrel)" />
+            <rect x="94" y="40" width="42" height="12" rx="4" fill="url(#gg-steelDark)" />
+            <ellipse cx="115" cy="46" rx="9" ry="4" fill="#15171a" />
+            <rect x="126" y="34" width="7" height="12" rx="2" fill="#2b2e33" />
+            <path d="M86 158 q0 -12 14 -12 l30 0 q14 0 14 14 l0 46 q0 14 -14 14 l-30 0 q-14 0 -14 -12 Z" fill="url(#gg-steel2)" />
+            <path d="M92 150 q-16 -8 -22 4 q-2 6 3 9 l11 5 q0 -14 8 -14 Z" fill="url(#gg-steelDark)" />
+            <circle cx="114" cy="196" r="37" fill="url(#gg-cyl)" />
+            <circle cx="114" cy="196" r="37" fill="none" stroke="#202327" stroke-width="3" />
+            <circle cx="114" cy="196" r="27" fill="none" stroke="#3a3e44" stroke-width="1.5" opacity="0.7" />
+            <circle cx="114" cy="173" r="4.5" fill="#202327" />
+            <circle cx="135" cy="188" r="4.5" fill="#202327" />
+            <circle cx="128" cy="212" r="4.5" fill="#202327" />
+            <circle cx="100" cy="212" r="4.5" fill="#202327" />
+            <circle cx="93" cy="188" r="4.5" fill="#202327" />
+            <circle cx="114" cy="196" r="5" fill="#3a3e44" />
+            <ellipse cx="103" cy="184" rx="10" ry="7" fill="#e6eaee" opacity="0.22" />
+            <path d="M98 230 q-8 22 14 30 l0 -8 q-12 -6 -8 -22 Z" fill="url(#gg-steelDark)" />
+            <path d="M110 230 q-3 12 3 21 l5 -3 q-5 -9 -2 -18 Z" fill="#2b2e33" />
+            <path d="M112 214 q-6 -6 -16 -3 L58 300 q-5 11 7 14 l24 5 q11 2 15 -9 L126 226 q3 -9 -6 -12 Z" fill="url(#gg-wood)" />
+            <path d="M104 226 l18 3 -14 44 -16 -3 Z" fill="#9a5f2e" opacity="0.45" />
+            <path d="M74 268 q16 3 30 5" stroke="#38210e" stroke-width="2" fill="none" opacity="0.5" />
+            <path d="M70 282 q16 3 30 5" stroke="#38210e" stroke-width="2" fill="none" opacity="0.5" />
+            <circle cx="90" cy="258" r="5" fill="url(#gg-brass)" />
           </svg>
         </div>
         <p class="stage-prompt" id="stage-prompt">Connecting&hellip;</p>

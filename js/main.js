@@ -1,6 +1,7 @@
 // App controller: rig check → lobby → pairing → duel (Phase 3).
 import { SIGNALING_URL, NET_MODE } from './config.js';
 import { PeerConn, makeRoomCode } from './net/peerconn.js';
+import { renderQR } from './net/qr.js';
 import { Signaling } from './net/signaling.js';
 import { PeerLink } from './net/webrtc.js';
 import { initCodec, encode, decode } from './net/codec.js';
@@ -8,7 +9,7 @@ import { ClockSync } from './duel/clock.js';
 import { Duel } from './duel/duel.js';
 import { MotionController } from './duel/motion.js';
 import { SoundFX } from './fx/audio.js';
-import { initFX, muzzleFlash, highNoonFlash, bloodSplash, screenShake } from './fx/visuals.js';
+import { initFX, muzzleFlash, highNoonFlash, bloodSplash, screenShake, smoke } from './fx/visuals.js';
 
 const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 let bestOf = 3;
@@ -147,6 +148,7 @@ function onCreated(m) {
   url.searchParams.set('room', m.code);
   $('room-code').textContent = m.code;
   $('join-link').value = url.toString();
+  renderQR($('qr'), url.toString());
   $('lobby-choose').hidden = true;
   $('lobby-host').hidden = false;
 }
@@ -249,8 +251,11 @@ async function onChannelOpen() {
   if (role === 'guest') {
     log('Syncing clock to host…');
     clock.sync().then((best) => {
-      log(best ? `Clock synced: offset ${Math.round(best.offset)}ms, rtt ${Math.round(best.rtt)}ms` : 'Clock sync: no samples');
+      log(best && best.rtt != null
+        ? `Clock synced: offset ${Math.round(best.offset)}ms, rtt ${Math.round(best.rtt)}ms`
+        : 'Clock sync: no samples');
     });
+    clock.startAutoSync();
   }
   duel.reset();
 }
@@ -289,8 +294,13 @@ function renderDuel(v) {
       sub.textContent = 'Wait for it. Don’t flinch.';
       break;
     case 'fire':
-      prompt.textContent = 'DRAW!';
-      sub.textContent = v.waiting ? 'Waiting for opponent…' : '';
+      if (v.myResult) {
+        prompt.textContent = v.myResult.falseStart ? 'Too soon!' : v.myResult.missed ? 'Missed!' : fmtResult(v.myResult);
+        sub.textContent = v.waiting ? 'Waiting for opponent…' : '';
+      } else {
+        prompt.textContent = 'DRAW!';
+        sub.textContent = '';
+      }
       break;
     case 'round': {
       prompt.textContent = v.roundWinner === 'me' ? 'You win the round!' : v.roundWinner === 'opp' ? 'You lost the round.' : 'Stand-off — replay!';
@@ -381,6 +391,13 @@ function closeCalibration() {
 
 // ---------- audio + visual FX ----------
 function shake(intensity) { screenShake(document.querySelector('#screen-duel .content'), intensity); }
+function haptic(pattern) { if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch { /* unsupported */ } } }
+function gunSmoke() {
+  const g = $('gun-wrap');
+  if (!g) return;
+  const r = g.getBoundingClientRect();
+  smoke(r.left + r.width * 0.575, r.top + r.height * 0.10); // muzzle = top-center of the gun
+}
 function recoilGun() {
   const g = $('gun-wrap');
   if (!g) return;
@@ -404,7 +421,7 @@ function onDuelEvent(name, data) {
       sfx.stopTension();
       if (data.falseStart) sfx.click();
       else if (data.missed) { /* no shot fired */ }
-      else { sfx.gunshot(); muzzleFlash(); recoilGun(); shake('md'); }
+      else { sfx.gunshot(); muzzleFlash(); recoilGun(); shake('md'); gunSmoke(); haptic([0, 45, 25, 20]); }
       break;
     case 'result':
       if (data.matchOver) {

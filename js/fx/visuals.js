@@ -1,6 +1,7 @@
-// Visual FX — muzzle flash, blood splash (canvas particles), red vignette,
-// high-noon flash, and screen shake. All synthesized; no assets. Elements are
-// created lazily and overlay the whole viewport. Honors prefers-reduced-motion.
+// Visual FX — muzzle flash, blood splash, rising gun smoke (canvas particles),
+// red vignette, high-noon flash, and screen shake. All synthesized; no assets.
+// Elements are created lazily and overlay the whole viewport. Honors
+// prefers-reduced-motion.
 
 let canvas, ctx, flashEl, particles = [], raf = 0;
 
@@ -51,6 +52,7 @@ export function bloodSplash(intensity = 1) {
     const ang = Math.random() * Math.PI * 2;
     const sp = 3 + Math.random() * 12 * intensity;
     particles.push({
+      kind: 'blood',
       x: cx, y: cy,
       vx: Math.cos(ang) * sp,
       vy: Math.sin(ang) * sp - 2,
@@ -63,22 +65,56 @@ export function bloodSplash(intensity = 1) {
   if (!raf) raf = requestAnimationFrame(step);
 }
 
+/** Rising powder smoke from a point (the muzzle). */
+export function smoke(x, y, count = 16) {
+  initFX();
+  if (reduced()) return;
+  for (let i = 0; i < count; i++) {
+    const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.1; // mostly upward
+    const sp = 0.6 + Math.random() * 2.2;
+    particles.push({
+      kind: 'smoke',
+      x: x + (Math.random() - 0.5) * 14,
+      y: y + (Math.random() - 0.5) * 10,
+      vx: Math.cos(ang) * sp,
+      vy: Math.sin(ang) * sp,
+      r: 5 + Math.random() * 7,
+      life: 1,
+      decay: 0.006 + Math.random() * 0.01,
+    });
+  }
+  if (!raf) raf = requestAnimationFrame(step);
+}
+
 function step() {
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   for (const p of particles) {
-    p.vy += 0.35; // gravity
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life -= p.decay;
-    if (p.life <= 0) continue;
-    ctx.globalAlpha = Math.max(0, p.life);
-    ctx.fillStyle = `hsl(${p.hue} 85% ${26 + p.life * 12}%)`;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r * (0.6 + p.life * 0.4), 0, Math.PI * 2);
-    ctx.fill();
+    if (p.kind === 'smoke') {
+      p.vy -= 0.02;         // buoyancy
+      p.vx *= 0.99;
+      p.x += p.vx; p.y += p.vy;
+      p.r += 0.5;           // billow
+      p.life -= p.decay;
+      if (p.life <= 0) continue;
+      ctx.globalAlpha = Math.max(0, p.life) * 0.4;
+      ctx.fillStyle = `hsl(32 6% ${55 + p.life * 10}%)`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      p.vy += 0.35;         // gravity
+      p.x += p.vx; p.y += p.vy;
+      p.life -= p.decay;
+      if (p.life <= 0) continue;
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = `hsl(${p.hue} 85% ${26 + p.life * 12}%)`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * (0.6 + p.life * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
-  particles = particles.filter((p) => p.life > 0 && p.y < window.innerHeight + 40);
+  particles = particles.filter((p) => p.life > 0 && p.y < window.innerHeight + 60 && p.y > -100);
   if (particles.length) raf = requestAnimationFrame(step);
   else { raf = 0; ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); }
 }
